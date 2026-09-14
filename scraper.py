@@ -2,6 +2,8 @@ import requests
 from bs4 import BeautifulSoup
 import re
 
+from database import guardar_precio
+
 def extraer_precio_producto(url):
     # 1. EL SCRAPER BASE
     # Simulamos ser Google Chrome en Windows para evitar bloqueos básicos
@@ -65,16 +67,10 @@ def extraer_precio_producto(url):
 
 # --- EJECUCIÓN DEL SCRIPT ---
 if __name__ == "__main__":
-    # Coloca aquí el enlace real de un producto para hacer la prueba
-    url_prueba = "https://example.com/producto" 
-    
+    url_prueba = "https://tu-url-de-prueba.com" 
     datos = extraer_precio_producto(url_prueba)
     
     if datos:
-        print("-" * 30)
-        print("RESULTADOS DE LA EXTRACCIÓN:")
-        print(f"Producto: {datos['titulo']}")
-        print(f"Precio procesable: {datos['precio']}")
-        print(f"Tipo de dato del precio: {type(datos['precio'])}")
-        # Ahora puedes hacer operaciones, como:
-        # if datos['precio'] < 1000.00: enviar_alerta()
+        print(f"Producto: {datos['titulo']} | Precio: {datos['precio']}")
+        # Guardamos en la base de datos
+        guardar_precio(url_prueba, datos['titulo'], datos['precio'])
