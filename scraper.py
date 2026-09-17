@@ -66,11 +66,41 @@ def extraer_precio_producto(url):
         return None
 
 # --- EJECUCIÓN DEL SCRIPT ---
+from database import guardar_precio, obtener_ultimo_precio
+from notifier import enviar_alerta_discord
+
+# --- EJECUCIÓN DEL PIPELINE ---
 if __name__ == "__main__":
-    url_prueba = "https://tu-url-de-prueba.com" 
-    datos = extraer_precio_producto(url_prueba)
+    # Puedes probar con el link real de algún componente que necesites, 
+    # por ejemplo, un microcontrolador ESP32 o algún módulo de sensores.
+    url_objetivo = "https://www.mercadolibre.com.mx/2pzs-modulo-esp32-wifibluetooth-42-ble-nodemcu-con-cable-usb/p/MLM46943073?pdp_filters=item_id:MLM2761507563#is_advertising=true&searchVariation=MLM46943073&backend_model=search-backend&be_origin=backend&position=1&search_layout=grid&type=pad&tracking_id=02b2ec4b-b3de-4bf9-abb6-ee8a16177f1e&ad_domain=VQCATCORE_LST&ad_position=1&ad_click_id=YmY3NWUyNDktMzZhYi00MDE4LTlmMDMtY2JhZjU3Njg5Mzlj" 
+    
+    print("🚀 Iniciando pipeline de extracción...")
+    datos = extraer_precio_producto(url_objetivo)
     
     if datos:
-        print(f"Producto: {datos['titulo']} | Precio: {datos['precio']}")
-        # Guardamos en la base de datos
-        guardar_precio(url_prueba, datos['titulo'], datos['precio'])
+        nombre = datos['titulo']
+        precio_actual = datos['precio']
+        
+        print(f"📦 Producto: {nombre} | Precio Actual: ${precio_actual}")
+        
+        # 1. Revisamos el historial
+        ultimo_precio = obtener_ultimo_precio(url_objetivo)
+        
+        if ultimo_precio is None:
+            print("ℹ️ Es la primera vez que rastreamos este producto. No hay historial para comparar.")
+        else:
+            print(f"🕒 Último precio registrado: ${ultimo_precio}")
+            
+            # 2. Lógica de alerta
+            if precio_actual < ultimo_precio:
+                print("📉 ¡El precio bajó! Disparando alerta...")
+                enviar_alerta_discord(nombre, precio_actual, url_objetivo)
+            elif precio_actual > ultimo_precio:
+                print("📈 El precio subió. Qué triste, no enviaremos alerta.")
+            else:
+                print("⚖️ El precio se mantiene igual.")
+                
+        # 3. Guardamos el nuevo registro en MySQL
+        guardar_precio(url_objetivo, nombre, precio_actual)
+        print("✅ Ejecución del pipeline finalizada con éxito.")
