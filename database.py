@@ -40,3 +40,29 @@ def guardar_precio(url, nombre, precio):
     finally:
         cursor.close()
         conexion.close()
+def obtener_ultimo_precio(url):
+    conexion = conectar_db()
+    cursor = conexion.cursor()
+    try:
+        # Buscamos el último precio registrado para este producto
+        sql = """
+            SELECT hp.precio 
+            FROM historial_precios hp
+            JOIN productos p ON hp.producto_id = p.id
+            WHERE p.url = %s
+            ORDER BY hp.fecha_registro DESC
+            LIMIT 1
+        """
+        cursor.execute(sql, (url,))
+        resultado = cursor.fetchone()
+        
+        if resultado:
+            return float(resultado[0])
+        return None  # Retorna None si es la primera vez que guardamos este producto
+        
+    except mysql.connector.Error as error:
+        print(f"❌ Error al consultar el último precio: {error}")
+        return None
+    finally:
+        cursor.close()
+        conexion.close()
